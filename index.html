@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Hit Testing</title>
+    <title>Furniture Viewer</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <link type="text/css" rel="stylesheet" href="style.css">
@@ -20,6 +20,10 @@
       let camera, scene, renderer;
       let reticle;
       let controller;
+
+      let draggedObject = null; // The object currently being dragged
+      const raycaster = new THREE.Raycaster(); // For detecting objects
+      const tempMatrix = new THREE.Matrix4(); // To compute the controller's position
 
       init();
       animate();
@@ -48,7 +52,10 @@
         scene.add(light);
         
         controller = renderer.xr.getController(0);
-        controller.addEventListener('select', onSelect);
+        // DISABLED FOR DRAG AND DROP TESTING
+        // controller.addEventListener('select', onSelect);
+        controller.addEventListener('selectstart', onSelectStart);
+        controller.addEventListener('selectend', onSelectEnd);
         scene.add(controller);
 
         addReticleToScene();
@@ -60,6 +67,23 @@
         renderer.domElement.style.display = "none";
 
         window.addEventListener("resize", onWindowResize, false);
+
+        /* ADDED TO TEST DRAG AND DROP, REMOVED THE SELECT EVENT, VISIBLE SET TO TRUE INITIALLY */
+        if (reticle.visible) {
+          // cone added at the point of a hit test
+          // replace the next lines to add your own object in space
+          const geometry = new THREE.CylinderBufferGeometry(0, 0.05, 0.2, 32);
+          const material = new THREE.MeshPhongMaterial({
+            color: 0xffffff
+          });
+          const mesh = new THREE.Mesh(geometry, material);
+          
+          // set the position of the cylinder based on where the reticle is          
+          mesh.position.setFromMatrixPosition(reticle.matrix);
+          mesh.quaternion.setFromRotationMatrix(reticle.matrix);
+
+          scene.add(mesh); 
+        }
       }
 
       function addReticleToScene() {
@@ -73,7 +97,8 @@
         // we will calculate the position and rotation of this reticle every frame manually
         // in the render() function so matrixAutoUpdate is set to false
         reticle.matrixAutoUpdate = false;
-        reticle.visible = false; // we start with the reticle not visible
+        // SET TO TRUE FOR DRAG TESTING
+        reticle.visible = true; // we start with the reticle not visible
         scene.add(reticle);
 
         // optional axis helper you can add to an object
@@ -98,6 +123,32 @@
         }
       }
 
+      function getIntersectedObject() {
+        // Update the raycaster to use the controller's position
+        tempMatrix.identity().extractRotation(controller.matrixWorld);
+        raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
+        raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
+
+        // Check for intersections with objects in the scene
+        const intersects = raycaster.intersectObjects(scene.children);
+        return intersects.length > 0 ? intersects[0].object : null;
+      }
+
+      function onSelectStart() {
+        const intersectedObject = getIntersectedObject(controller);
+        if (intersectedObject) {
+          draggedObject = intersectedObject;
+          console.log('Dragging started:', draggedObject);
+        }
+      }
+
+      function onSelectEnd() {
+        if (draggedObject) {
+          console.log('Dropped object:', draggedObject);
+          draggedObject = null; // Release the object
+        }
+      }
+
       function onWindowResize() {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
@@ -106,6 +157,10 @@
       }
 
       function animate() {
+        if (draggedObject) {
+          // Update the object's position to match the controller's position
+          draggedObject.position.setFromMatrixPosition(controller.matrixWorld);
+        }
         renderer.setAnimationLoop(render);
       }
 
