@@ -74,7 +74,7 @@
           // replace the next lines to add your own object in space
           const geometry = new THREE.CylinderBufferGeometry(0, 0.05, 0.2, 32);
           const material = new THREE.MeshPhongMaterial({
-            color: 0xffffff
+            color: 0x123456
           });
           const mesh = new THREE.Mesh(geometry, material);
           
@@ -111,7 +111,7 @@
           // replace the next lines to add your own object in space
           const geometry = new THREE.CylinderBufferGeometry(0, 0.05, 0.2, 32);
           const material = new THREE.MeshPhongMaterial({
-            color: 0xffffff// * Math.random()
+            color: 0x000000// * Math.random()
           });
           const mesh = new THREE.Mesh(geometry, material);
           
@@ -135,6 +135,18 @@
       }
 
       function onSelectStart() {
+/*      VISUAL FEEDBACK FOR DEBUGGING WITHOUT TOOLS
+        const feedback = new THREE.Mesh(
+        new THREE.SphereGeometry(0.02),
+        new THREE.MeshBasicMaterial({ color: 0x0000ff })
+        );
+        feedback.position.setFromMatrixPosition(controller.matrixWorld);
+        scene.add(feedback);
+
+        // Remove feedback after 1 second
+        setTimeout(() => {
+            scene.remove(feedback);
+        }, 1000); */
         const intersectedObject = getIntersectedObject(controller);
         if (intersectedObject) {
           draggedObject = intersectedObject;
@@ -157,10 +169,6 @@
       }
 
       function animate() {
-        if (draggedObject) {
-          // Update the object's position to match the controller's position
-          draggedObject.position.setFromMatrixPosition(controller.matrixWorld);
-        }
         renderer.setAnimationLoop(render);
       }
 
@@ -207,6 +215,11 @@
       // a VR or AR sccene.
       function render(timestamp, frame) {
         if (frame) {
+          // 0. drag and drop testing
+          if (draggedObject) {
+            // Update the object's position to match the controller's position
+            draggedObject.position.setFromMatrixPosition(controller.matrixWorld);
+          }
           // 1. create a hit test source once and keep it for all the frames
           // this gets called only once
           if (!hitTestSourceInitialized) {
