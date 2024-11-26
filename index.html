@@ -24,6 +24,17 @@
       let draggedObject = null; // The object currently being dragged
       const raycaster = new THREE.Raycaster(); // For detecting objects
       const tempMatrix = new THREE.Matrix4(); // To compute the controller's position
+      let initialOffset = new THREE.Vector3(); // To compute the dragged object's position
+
+      // DEBUG HELPER OBJECTS
+      const basePosHelper = new THREE.Mesh(
+        new THREE.SphereGeometry(0.02),
+        new THREE.MeshBasicMaterial({ color: 0x00ff00 })
+      );
+      const finalPosHelper = new THREE.Mesh(
+        new THREE.SphereGeometry(0.02),
+        new THREE.MeshBasicMaterial({ color: 0xff0000 })
+      );
 
       init();
       animate();
@@ -151,6 +162,13 @@
         if (intersectedObject) {
           draggedObject = intersectedObject;
           console.log('Dragging started:', draggedObject);
+          initialOffset.copy(objectPosition).sub(controllerPosition);
+
+          const originPos = new THREE.Vector3( 0, 0, 0 );
+          basePosHelper.position.copy(originPos);
+          finalPosHelper.position.copy(originPos);
+          scene.add(basePosHelper);
+          scene.add(finalPosHelper);
         }
       }
 
@@ -158,6 +176,10 @@
         if (draggedObject) {
           console.log('Dropped object:', draggedObject);
           draggedObject = null; // Release the object
+          initialOffset.set(0, 0, 0);
+
+          scene.remove(basePosHelper);
+          scene.remove(finalPosHelper);
         }
       }
 
@@ -235,14 +257,26 @@
               reticle.visible = true;
               // Transform/move the reticle image to the hit test position
               reticle.matrix.fromArray(pose.transform.matrix);
+
+              // 3. snap dragged object to the reticle with finger adjustments
+              if (draggedObject) {
+                const basePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
+                const controllerPosition = new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld);
+                const finalPosition = new THREE.Vector3().copy(basePosition).add(initialOffset).add(
+                    controllerPosition.sub(basePosition) // Adjust by controller movement
+                );
+                draggedObject.position.copy(finalPosition);
+              /* MAKE THE DRAGGING SMOOTHER, UNCOMMENT ONCE DRAGGING WORKS
+                const alpha = 0.8 // Weight for smoothing
+                const adjustedPosition = new THREE.Vector3().lerpVectors(basePosition, finalPosition, alpha);
+                draggedObject.position.copy(adjustedPosition);
+              */
+                basePosHelper.position.copy(basePosition);
+                finalPosHelper.position.copy(finalPosition);
+              }
             } else {
               reticle.visible = false;
             }
-          }
-
-          // 3. snap dragged object to the reticle
-          if (draggedObject) {
-            draggedObject.position.setFromMatrixPosition(reticle.matrix);
           }
 
           renderer.render(scene, camera);
