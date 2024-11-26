@@ -215,11 +215,6 @@
       // a VR or AR sccene.
       function render(timestamp, frame) {
         if (frame) {
-          // 0. drag and drop testing
-          if (draggedObject) {
-            // Update the object's position to match the controller's position
-            draggedObject.position.setFromMatrixPosition(controller.matrixWorld);
-          }
           // 1. create a hit test source once and keep it for all the frames
           // this gets called only once
           if (!hitTestSourceInitialized) {
@@ -243,6 +238,11 @@
             } else {
               reticle.visible = false;
             }
+          }
+
+          // 3. snap dragged object to the reticle
+          if (draggedObject) {
+            draggedObject.position.setFromMatrixPosition(reticle.matrix);
           }
 
           renderer.render(scene, camera);
