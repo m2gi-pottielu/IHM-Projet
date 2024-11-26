@@ -129,10 +129,36 @@
         raycaster.ray.origin.setFromMatrixPosition(controller.matrixWorld);
         raycaster.ray.direction.set(0, 0, -1).applyMatrix4(tempMatrix);
 
-        // Check for intersections with objects in the scene
-        const intersects = raycaster.intersectObjects(scene.children);
-        return intersects.length > 0 ? intersects[0].object : null;
+        let closestObject = null;
+        let closestDistance = Infinity;
+
+        // Iterate through all objects and test bounding box intersections
+        scene.children.forEach((child) => {
+            if (!child.geometry) return; // Skip non-geometric objects
+
+            // Compute the bounding box if not already done
+            if (!child.geometry.boundingBox) {
+                child.geometry.computeBoundingBox();
+            }
+
+            const box = child.geometry.boundingBox.clone(); // Clone to avoid modifying the original
+            box.expandByScalar(0.1); // Expand the bounding box by 0.1 units, or more if needed
+            box.applyMatrix4(child.matrixWorld); // Transform to world space
+
+            // Check intersection with the raycaster's ray
+            const intersectionPoint = new THREE.Vector3();
+            if (raycaster.ray.intersectsBox(box, intersectionPoint)) {
+                const distance = raycaster.ray.origin.distanceTo(intersectionPoint);
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestObject = child;
+                }
+            }
+        });
+
+        return closestObject;
       }
+
 
       function onSelectStart() {
 /*      VISUAL FEEDBACK FOR DEBUGGING WITHOUT TOOLS
