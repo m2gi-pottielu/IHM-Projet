@@ -177,6 +177,7 @@
           initialOffset.copy(objectPosition).sub(controllerPosition);
           */
           const controllerPosition = new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld);
+          controllerPosition.y = 0;
           initialController.copy(controllerPosition);
         }
       }
@@ -289,14 +290,18 @@
 
               // Get the controller's current position
               const controllerPosition = new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld);
+              controllerPosition.y = basePosition.y;
+              initialController.y = basePosition.y;
 
               // Get the new initial offset
               initialOffset.copy(basePosition).sub(initialController);
 
-              // Calculate the final position by combining the hit test position and the relative offset
-              const finalPosition = new THREE.Vector3().copy(basePosition).add(initialOffset).add(
-                  controllerPosition.sub(basePosition).multiplyScalar(1.2) // Adjust by controller movement
-              );
+              // TODO Creer un vecteur pour avoir le mouvement du doigt (controllerPosition - initialController)
+
+              // TODO Juste calculer avec basePosition
+              const finalPosition = new THREE.Vector3().copy(basePosition).add(initialOffset).add(controllerPosition.sub(basePosition));
+
+              // TODO si le vecteur doigt est assez grand, ajouter a finalPosition add(controllerPosition.sub(basePosition) (multiplier composants x et z pour plus d'effet du doigt)
 
               // Update the dragged object's position
               draggedObject.position.copy(finalPosition);
