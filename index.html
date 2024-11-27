@@ -24,7 +24,6 @@
       let draggedObject = null; // The object currently being dragged
       const raycaster = new THREE.Raycaster(); // For detecting objects
       const tempMatrix = new THREE.Matrix4(); // To compute the controller's position
-      let initialOffset = new THREE.Vector3(); // To compute the dragged object's position
       let initialController = new THREE.Vector3(); // Initial finger position at drag start
 
       init();
@@ -171,13 +170,8 @@
         if (intersectedObject) {
           draggedObject = intersectedObject;
           console.log('Dragging started:', draggedObject);
-/*
+
           const controllerPosition = new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld);
-          const objectPosition = new THREE.Vector3().setFromMatrixPosition(draggedObject.matrixWorld);
-          initialOffset.copy(objectPosition).sub(controllerPosition);
-          */
-          const controllerPosition = new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld);
-          controllerPosition.y = 0;
           initialController.copy(controllerPosition);
         }
       }
@@ -186,8 +180,6 @@
         if (draggedObject) {
           console.log('Dropped object:', draggedObject);
           draggedObject = null; // Release the object
-          
-          initialOffset.set(0, 0, 0);
 /*
           scene.remove(basePosHelper);
           scene.remove(finalPosHelper);
@@ -273,37 +265,26 @@
               reticle.visible = false;
             }
 
-            // 3. snap dragged object to the reticle
+            // 3. update dragged object
             if (draggedObject) {
-              /*
-              const basePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
-              const controllerPosition = new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld);
-              // const finalPosition = new THREE.Vector3().copy(basePosition).add(initialOffset).add(
-              //     controllerPosition.sub(basePosition) // Adjust by controller movement
-              // );
-              const finalPosition = new THREE.Vector3().copy(basePosition).add(controllerPosition.sub(basePosition));
-              
-              draggedObject.position.copy(finalPosition);
-              */
-              // Get the base position from the hit test result
+              // Get the base position from the hit test result (where the object will be anchored)
               const basePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
 
-              // Get the controller's current position
+              // Get the controller's current and initial position projected on the base surface
               const controllerPosition = new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld);
               controllerPosition.y = basePosition.y;
               initialController.y = basePosition.y;
 
-              // Get the new initial offset
-              initialOffset.copy(basePosition).sub(initialController);
+              // Snap the object to the base position
+              const finalPosition = new THREE.Vector3().copy(basePosition);
 
-              // TODO Creer un vecteur pour avoir le mouvement du doigt (controllerPosition - initialController)
+              // Offset the final position by the finger movement
+              const fingerVector = new THREE.Vector3().copy(controllerPosition.sub(initialController));
+              fingerVector.x = fingerVector.x * 1;
+              fingerVector.z = fingerVector.z * 1;
+              finalPosition.add(fingerVector);
 
-              // TODO Juste calculer avec basePosition
-              const finalPosition = new THREE.Vector3().copy(basePosition).add(initialOffset).add(controllerPosition.sub(basePosition));
-
-              // TODO si le vecteur doigt est assez grand, ajouter a finalPosition add(controllerPosition.sub(basePosition) (multiplier composants x et z pour plus d'effet du doigt)
-
-              // Update the dragged object's position
+              // Apply the new dragged object's position
               draggedObject.position.copy(finalPosition);
               /*
               basePosHelper.position.setFromMatrixPosition(reticle.matrix);
