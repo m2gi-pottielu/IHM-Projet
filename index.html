@@ -92,17 +92,25 @@
           // cone added at the point of a hit test
           // replace the next lines to add your own object in space
           const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2, 1, 1, 1);
-          const material = new THREE.MeshPhongMaterial({
-            color: 0xff00ff
+          const material1 = new THREE.MeshPhongMaterial({
+            color: 0x00ff00
           });
-          const mesh = new THREE.Mesh(geometry, material);
-          mesh.name = 'Furniture';
+          const material2 = new THREE.MeshPhongMaterial({
+            color: 0xff0000
+          });
+          const furniture1 = new THREE.Mesh(geometry, material1);
+          const furniture2 = new THREE.Mesh(geometry, material2);
+          furniture1.name = 'Furniture1';
+          furniture2.name = 'Furniture2';
           
           // set the position of the cylinder based on where the reticle is          
-          mesh.position.setFromMatrixPosition(reticle.matrix);
-          mesh.quaternion.setFromRotationMatrix(reticle.matrix);
+          furniture1.position.setFromMatrixPosition(reticle.matrix);
+          furniture1.quaternion.setFromRotationMatrix(reticle.matrix);
+          furniture2.position.setFromMatrixPosition(reticle.matrix);
+          furniture2.quaternion.setFromRotationMatrix(reticle.matrix);
 
-          scene.add(mesh); 
+          scene.add(furniture1);
+          scene.add(furniture2);
         }
       }
 
@@ -156,7 +164,7 @@
       }
 
       function getProximateObject(controller) {
-          const controllerPosition = new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld);
+          const reticlePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrixWorld);
           let closestObject = null;
           let closestDistance = Infinity;
 
@@ -164,7 +172,7 @@
               if (!child.geometry || child.name == 'reticle') return;
 
               const objectPosition = new THREE.Vector3().setFromMatrixPosition(child.matrixWorld);
-              const distance = controllerPosition.distanceTo(objectPosition);
+              const distance = reticlePosition.distanceTo(objectPosition);
 
               if (distance < closestDistance) {
                   closestDistance = distance;
