@@ -91,15 +91,16 @@
         if (reticle.visible) {
           // cone added at the point of a hit test
           // replace the next lines to add your own object in space
-          const geometry = new THREE.BoxGeometry(0.2, 0.2, 0.2, 1, 1, 1);
+          const geometry1 = new THREE.BoxGeometry(0.55, 0.8, 0.4, 1, 1, 1);
+          const geometry2 = new THREE.BoxGeometry(1, 0.5, 0.5, 1, 1, 1);
           const material1 = new THREE.MeshPhongMaterial({
             color: 0x00ff00
           });
           const material2 = new THREE.MeshPhongMaterial({
             color: 0xff0000
           });
-          const furniture1 = new THREE.Mesh(geometry, material1);
-          const furniture2 = new THREE.Mesh(geometry, material2);
+          const furniture1 = new THREE.Mesh(geometry1, material1);
+          const furniture2 = new THREE.Mesh(geometry2, material2);
           furniture1.name = 'Furniture1';
           furniture2.name = 'Furniture2';
           
@@ -115,7 +116,7 @@
       }
 
       function addReticleToScene() {
-        const geometry = new THREE.RingBufferGeometry(0.15, 0.2, 32).rotateX(
+        const geometry = new THREE.RingBufferGeometry(0.25, 0.3, 32).rotateX(
           -Math.PI / 2
         );
         const material = new THREE.MeshBasicMaterial();
@@ -301,13 +302,19 @@
             if (draggedObject) {
               // Get the base position from the hit test result (where the object will be anchored)
               const basePosition = new THREE.Vector3().setFromMatrixPosition(reticle.matrix);
-
+/*
               // Get the controller's current and initial position projected on the base surface
               const controllerPosition = new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld);
               controllerPosition.y = basePosition.y;
               initialController.y = basePosition.y;
+*/
+              // Offset the base position by half of the object's height, to have the bottom touch the surface
+              draggedObject.geometry.computeBoundingBox();
+              const boundingBox = draggedObject.geometry.boundingBox;
+              const height = boundingBox.max.y - boundingBox.min.y;
+              basePosition.y = basePosition.y + height/2;
 
-              // Snap the object to the base position
+              // Snap the object to the base position, with the bottom of the object at the reticle level
               const finalPosition = new THREE.Vector3().copy(basePosition);
 /*
               // Offset the final position by the finger movement
