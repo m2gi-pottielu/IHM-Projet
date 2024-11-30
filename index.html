@@ -96,6 +96,7 @@
             color: 0xff00ff
           });
           const mesh = new THREE.Mesh(geometry, material);
+          mesh.name = 'Furniture';
           
           // set the position of the cylinder based on where the reticle is          
           mesh.position.setFromMatrixPosition(reticle.matrix);
@@ -112,6 +113,7 @@
         const material = new THREE.MeshBasicMaterial();
 
         reticle = new THREE.Mesh(geometry, material);
+        reticle.name = 'reticle';
 
         // we will calculate the position and rotation of this reticle every frame manually
         // in the render() function so matrixAutoUpdate is set to false
@@ -153,6 +155,27 @@
         return intersects.length > 0 ? intersects[0].object : null;
       }
 
+      function getProximateObject(controller) {
+          const controllerPosition = new THREE.Vector3().setFromMatrixPosition(controller.matrixWorld);
+          let closestObject = null;
+          let closestDistance = Infinity;
+
+          scene.children.forEach((child) => {
+              if (!child.geometry || child.name == 'reticle') return;
+
+              const objectPosition = new THREE.Vector3().setFromMatrixPosition(child.matrixWorld);
+              const distance = controllerPosition.distanceTo(objectPosition);
+
+              if (distance < closestDistance) {
+                  closestDistance = distance;
+                  closestObject = child;
+              }
+          });
+
+          return closestObject;
+      }
+
+
       function onSelectStart() {
 /*      VISUAL FEEDBACK FOR DEBUGGING WITHOUT TOOLS
         const feedback = new THREE.Mesh(
@@ -166,7 +189,8 @@
         setTimeout(() => {
             scene.remove(feedback);
         }, 1000); */
-        const intersectedObject = getIntersectedObject(controller);
+        //const intersectedObject = getIntersectedObject(controller);
+        const intersectedObject = getProximateObject(controller);
         if (intersectedObject) {
           draggedObject = intersectedObject;
           console.log('Dragging started:', draggedObject);
@@ -277,13 +301,13 @@
 
               // Snap the object to the base position
               const finalPosition = new THREE.Vector3().copy(basePosition);
-
+/*
               // Offset the final position by the finger movement
               const fingerVector = new THREE.Vector3().copy(controllerPosition.sub(initialController));
-              fingerVector.x = fingerVector.x * 1;
-              fingerVector.z = fingerVector.z * 1;
+              fingerVector.x = fingerVector.x * 20;
+              fingerVector.z = fingerVector.z * 20;
               finalPosition.add(fingerVector);
-
+*/
               // Apply the new dragged object's position
               draggedObject.position.copy(finalPosition);
               /*
